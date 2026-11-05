@@ -11,6 +11,12 @@ export const gatewayPluginTestFiles = [
 
 // Native database consumers retain lifecycle cleanup within each forked process.
 export const gatewayDatabaseWorkerTestFiles = [
+  "src/gateway/cron-command-source.test.ts",
+  "src/gateway/cron-stream-source-authority.test.ts",
+  "src/gateway/openai-compatible-agent-run.test.ts",
+  "src/gateway/tools-invoke-http.abort.test.ts",
+  "src/gateway/openclaw-id/scheduled-source.persistence.test.ts",
+  "src/gateway/http-auth-utils.openclaw-id-tunnel.test.ts",
   "src/gateway/openclaw-id/claw-store.persistence.test.ts",
   "src/gateway/openclaw-id/member-profiles.persistence.test.ts",
   "src/gateway/openclaw-id/remote-signout.test.ts",
