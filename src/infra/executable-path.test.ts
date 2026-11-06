@@ -175,6 +175,49 @@ describe("executable path helpers", () => {
     },
   );
 
+  it("resolveExecutable honors PATH directory order over the .cmd preference", async () => {
+    // #193806: a later-dir .cmd must not outrank an earlier-dir .exe.
+    await withMockedPlatform("win32", async () => {
+      await withTestDir({ prefix: "openclaw-exec-path-" }, async (base) => {
+        const first = path.join(base, "first");
+        const later = path.join(base, "later");
+        await fs.mkdir(first);
+        await fs.mkdir(later);
+        const exePath = path.join(first, "gcloud.exe");
+        const cmdPath = path.join(later, "gcloud.cmd");
+        await fs.writeFile(exePath, "exe\n");
+        await fs.writeFile(cmdPath, "@echo off\n");
+
+        await withEnvAsync(
+          { PATH: `${first};${later}`, PATHEXT: ".EXE;.CMD;.BAT;.COM" },
+          async () => {
+            expect(resolveExecutable("gcloud")).toBe(exePath);
+          },
+        );
+      });
+    });
+  });
+
+  it("resolveExecutable keeps the .cmd preference within one directory", async () => {
+    // The within-directory wrapper preference is preserved: when both exist in
+    // the same PATH directory, the .cmd launcher still wins (#193806).
+    await withMockedPlatform("win32", async () => {
+      await withTestDir({ prefix: "openclaw-exec-path-" }, async (binDir) => {
+        const exePath = path.join(binDir, "tool.exe");
+        const cmdPath = path.join(binDir, "tool.cmd");
+        await fs.writeFile(exePath, "exe\n");
+        await fs.writeFile(cmdPath, "@echo off\n");
+
+        await withEnvAsync(
+          { PATH: binDir, PATHEXT: ".EXE;.CMD;.BAT;.COM" },
+          async () => {
+            expect(resolveExecutable("tool")).toBe(cmdPath);
+          },
+        );
+      });
+    });
+  });
+
   it.each([".EXE; ;.CMD", "", ";;"])(
     "keeps extensionless lookup explicit with PATHEXT %j",
     async (pathext) => {
